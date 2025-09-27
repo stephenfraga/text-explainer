@@ -1,0 +1,40 @@
+// content.js
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === "GET_SELECTION") {
+    const sel = window.getSelection().toString().trim();
+    if (!sel) {
+      alert("No text selected");
+      return;
+    }
+
+    // Collect a little context
+    const parentText =
+      window.getSelection().anchorNode?.parentElement?.innerText || "";
+    const context = parentText.slice(0, 300);
+
+    const prompt = `Explain "${sel}" in plain English. Context: ${context}`;
+    chrome.runtime.sendMessage({ type: "FETCH_OPENAI", prompt });
+  }
+
+  if (msg.type === "OPENAI_RESULT") {
+    const explanation = msg.result;
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+      alert(explanation);
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+    const span = document.createElement("span");
+    span.style.background = "yellow";
+    span.style.marginLeft = "4px";
+    span.style.fontStyle = "italic";
+    span.textContent = ` (${explanation})`;
+
+    range.collapse(false);
+    range.insertNode(span);
+    sel.removeAllRanges();
+  }
+});
