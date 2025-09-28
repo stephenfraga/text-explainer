@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Text Explainer",
   "version": "1.0.4",
-  "description": "Explain selected text via OpenAI",
+  "description": "Explain selected text via OpenRouter LLM",
   "permissions": [
     "scripting",
     "storage",

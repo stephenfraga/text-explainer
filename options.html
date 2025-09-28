@@ -1,69 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Extension Options</title>
+  <meta charset="utf-8" />
+  <title>Text Explainer Settings</title>
   <style>
     body { font-family: sans-serif; margin: 20px; }
-    label { display: block; margin-bottom: 8px; }
-    input { width: 400px; }
-    button { margin-top: 10px; margin-right: 10px; }
-    #status { margin-top: 10px; font-size: 0.9em; }
-    #status.success { color: green; }
-    #status.error { color: red; }
+    label { display: block; margin-bottom: 10px; }
+    input { width: 300px; }
+    #status { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
-	<h1>Text Explainer Settings</h1>
-	<p>
-	  This extension requires an OpenAI API key in order to function. No key is currently set.
-	</p>
+  <h1>Text Explainer Settings</h1>
 
-	<label>
-	OpenAI API Key:
-	<input type="password" id="keyInput" placeholder="sk-..." />
-	</label>
-	<button id="save">Save</button>
-	<button id="clear">Clear</button>
+  <p>
+    You are seeing this page because there is no API key set for the extension, which is required for it to work.
+  </p>
 
-	<!-- Inline status message -->
-	<div id="status"></div>
+  <label>
+    API Key:
+    <input type="password" id="keyInput" placeholder="paste your API key here" />
+  </label>
+  <button id="save">Save</button>
+  <button id="clear">Clear</button>
+  <div id="status"></div>
 
-	<br><br>
-	<hr>
-	<p>
-	  <strong>Cost.</strong> You can generate an API key by creating an account at
-	  <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>.
-	  OpenAI requires a credit card and a minimum $5 prepaid balance. You pay for what you use, but because this
-	  extension makes only lightweight requests: 100 uses will cost less than one cent.
-	</p>
-	<p>
-	  <strong>Usage.</strong> Once your API key is saved, highlight any word or phrase on a webpage,
-	  then either:
-	</p>
-	<ul>
-	  <li>press <kbd>Ctrl+Shift+H</kbd> (or the equivalent shortcut on your system), or</li>
-	  <li>right-click and choose <em>"Text Explainer"</em>.</li>
-	</ul>
-	<p>
-	  The selected text will be replaced in red with its plain-English meaning.
-	</p>
+  <hr>
+  <p>
+    <strong>How to get a key:</strong> You can generate a free API key at
+    <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a>.
+  </p>
+  <p>
+    <strong>Security:</strong> Your API key is stored locally in your browser using Chrome's extension storage.
+    It is never shared except directly with the API provider when you request an explanation.
+  </p>
+  <p>
+    <strong>License:</strong> This project is open source under the Apache 2.0 license. You can view or contribute to the code on
+    <a href="https://github.com/stephenfraga/text-explainer" target="_blank">GitHub</a>.
+  </p>
 
-	<p>
-	  <strong>Security.</strong> Your API key is stored locally in your browser using Chrome's extension storage.
-	  It is never shared with anyone and is sent only to the OpenAI API when explanations are requested. To be extra safe,
-	  you can also specify a spending ceiling (e.g., $10) when setting up the API key. To add an extra layer of safety, you
-	  can set a usage limit or spending cap in your OpenAI account (for example, $10). This ensures the key can't generate
-	  unexpected charges beyond the limit you choose.
-	</p>
-
-	<p>
-	  <strong>License.</strong> This project is open source under the Apache 2.0 license.
-	  The full source code is available on
-	  <a href="https://github.com/stephenfraga/text-explainer" target="_blank">GitHub</a>.
-	</p>
-
-	<script src="options.js"></script>
-
+  <script src="options.js"></script>
 </body>
 </html>

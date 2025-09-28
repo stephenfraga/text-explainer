@@ -5,37 +5,27 @@ const saveBtn = document.getElementById("save");
 const clearBtn = document.getElementById("clear");
 const status = document.getElementById("status");
 
-// Load any saved key
-chrome.storage.local.get(["OPENAI_KEY"], (res) => {
-  if (res.OPENAI_KEY) input.value = res.OPENAI_KEY;
+// Load saved key
+chrome.storage.local.get(["API_KEY"], (res) => {
+  if (res.API_KEY) input.value = res.API_KEY;
 });
 
-// Save the key
+// Save key
 saveBtn.addEventListener("click", () => {
   const key = input.value.trim();
   if (key) {
-    chrome.storage.local.set({ OPENAI_KEY: key }, () => {
-      showStatus("API key saved. Close this tab to return.", "success");
+    chrome.storage.local.set({ API_KEY: key }, () => {
+      status.textContent = "API key saved. Close this tab to return.";
+      status.style.color = "green";
     });
-  } else {
-    showStatus("Please enter a valid API key.", "error");
   }
 });
 
-// Clear the key
+// Clear key
 clearBtn.addEventListener("click", () => {
-  chrome.storage.local.remove("OPENAI_KEY", () => {
+  chrome.storage.local.remove("API_KEY", () => {
     input.value = "";
-    showStatus("API key cleared. Close this tab to return.", "success");
+    status.textContent = "API key cleared. Close this tab to return.";
+    status.style.color = "red";
   });
 });
-
-// Helper to show messages
-function showStatus(msg, type) {
-  status.textContent = msg;
-  status.className = type; // "success" or "error"
-  setTimeout(() => {
-    status.textContent = "";
-    status.className = "";
-  }, 3000);
-}

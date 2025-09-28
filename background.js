@@ -4,7 +4,7 @@
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "explain-text",
-    title: "Explain with Text Explainer",
+    title: "Text Explainer",
     contexts: ["selection"]
   });
 });
@@ -69,9 +69,9 @@ async function runExplainer(tab) {
 
     const { sel, ctx } = hit.result;
 
-    chrome.storage.local.get(["OPENAI_KEY"], async (res) => {
-      const OPENAI_KEY = res?.OPENAI_KEY;
-      if (!OPENAI_KEY) {
+    chrome.storage.local.get(["API_KEY"], async (res) => {
+      const API_KEY = res?.API_KEY;
+      if (!API_KEY) {
         if (chrome.runtime.openOptionsPage) {
           chrome.runtime.openOptionsPage();
         } else {
@@ -84,27 +84,25 @@ async function runExplainer(tab) {
       // ----------------------
       let explanation = "No explanation returned.";
       try {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": "Bearer " + OPENAI_KEY,
-            "Content-Type": "application/json"
+            "Authorization": "Bearer " + API_KEY,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/stephenfraga/text-explainer",
+            "X-Title": "Text Explainer Chrome Extension"
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
-            temperature: 0,
-            max_tokens: 160,
+            model: "deepseek/deepseek-chat-v3.1:free", // try swapping out others: "meta-llama/llama-3.3-70b-instruct:free", "deepseek/deepseek-chat-v3.1:free" or "google/gemini-2.0-flash-exp:free"
             messages: [
-              {
-                role: "user",
-                content: `Replace the text "${sel}" with its plain English equivalent only. 
-If it is an acronym, output only its expanded form (e.g., "IRS" = "Internal Revenue Service"). 
-If it is a foreign word or phrase, output only its English translation (e.g., "grand chien" = "big dog"). 
-If it is an uncommon word, output only a concise synonym or plain-English paraphrase (e.g., "ephemeral" = "lasting only briefly"). 
-If it is a person or proper name, output only a one-sentence identity in noun form (e.g., "Aubrey Beardsley" = "English author and illustrator"). 
-Do not explain, define, or add commentary -- output only the replacement phrase. 
-Context: ${ctx}`
-              }
+              { role: "system", content: "You are a concise explainer. Output only the replacement phrase." },
+              { role: "user", content: `Replace the text "${sel}" with its plain English equivalent only. 
+                If it is an acronym, output only its expanded form.
+                If it is a foreign word or phrase, output only its English translation.
+                If it is an uncommon word, output only a concise synonym or plain-English paraphrase.
+                If it is a person or proper name, output only a one-sentence identity in noun form.
+                Do not explain or define — output only the replacement phrase.
+                Context: ${ctx}` }
             ]
           })
         });
@@ -125,43 +123,43 @@ Context: ${ctx}`
         explanation = cleanOutput(explanation);
       }
 
-	// --------------------------
-	// Inject into page, replacing the highlighted text
-	try {
-	  await chrome.scripting.executeScript({
-	    target: { tabId: tab.id, frameIds: [hit.frameId] },
-	    args: [explanation],
-	    func: (exp) => {
-	      const sel = window.getSelection();
-	      if (!sel || sel.rangeCount === 0) {
-		alert(exp);
-		return;
-	      }
+      // --------------------------
+      // Inject into page, replacing the highlighted text
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id, frameIds: [hit.frameId] },
+          args: [explanation],
+          func: (exp) => {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) {
+              alert(exp);
+              return;
+            }
 
-	      const r = sel.getRangeAt(0);
-	      const original = sel.toString();
+            const r = sel.getRangeAt(0);
+            const original = sel.toString();
 
-	      // Detect if original selection ended with a space
-	      const keepSpace = /\s$/.test(original);
+            // Detect if original selection ended with a space
+            const keepSpace = /\s$/.test(original);
 
-	      r.deleteContents();
+            r.deleteContents();
 
-	      const frag = document.createDocumentFragment();
-	      const wrapper = document.createElement("span");
-	      const out = document.createElement("span");
-	      out.style.color = "red";
-	      out.textContent = exp + (keepSpace ? " " : ""); // append space if needed
-	      wrapper.appendChild(out);
-	      frag.appendChild(wrapper);
+            const frag = document.createDocumentFragment();
+            const wrapper = document.createElement("span");
+            const out = document.createElement("span");
+            out.style.color = "red";
+            out.textContent = exp + (keepSpace ? " " : ""); // append space if needed
+            wrapper.appendChild(out);
+            frag.appendChild(wrapper);
 
-	      r.insertNode(frag);
-	      sel.removeAllRanges();
-	    }
-	  });
-	} catch (injectErr) {
-	  // injection failed
-	}
-	// --------------------------
+            r.insertNode(frag);
+            sel.removeAllRanges();
+          }
+        });
+      } catch (injectErr) {
+        // injection failed
+      }
+      // --------------------------
     });
   } catch (err) {
     console.error("Top-level error in runExplainer:", err);
