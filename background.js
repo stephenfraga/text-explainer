@@ -7,42 +7,41 @@ chrome.commands.onCommand.addListener(async (command) => {
       return;
     }
 
-// Probe page for selection and nearby context
+// --------------
+// Probe page for selection and nearby context using parent element text
 const probes = await chrome.scripting.executeScript({
   target: { tabId: tab.id, allFrames: true },
   func: () => {
     try {
-      const selObj = window.getSelection();
-      if (!selObj || selObj.rangeCount === 0) {
-        return { sel: "", ctx: "" };
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return { sel: "", ctx: "" };
+
+      const range = sel.getRangeAt(0);
+      const term = sel.toString().trim();
+      if (!term) return { sel: "", ctx: "" };
+
+      // Use the parent element’s full text
+      let parent = range.commonAncestorContainer;
+      if (parent.nodeType !== Node.ELEMENT_NODE) {
+        parent = parent.parentElement;
       }
+      const fullText = parent.textContent || "";
 
-      const range = selObj.getRangeAt(0);
-      const sel = selObj.toString().trim();
+      // Find the index of the selected text within that full text
+      const idx = fullText.indexOf(term);
+      if (idx === -1) return { sel: term, ctx: "" };
 
-      // Climb to a larger container (like a <p> or <div>)
-      let container = range.commonAncestorContainer;
-      if (container.nodeType !== Node.ELEMENT_NODE) {
-        container = container.parentElement;
-      }
-
-      const fullText = container.innerText || container.textContent || "";
-      const idx = fullText.indexOf(sel);
-      if (idx === -1) {
-        return { sel, ctx: "" };
-      }
-
-      // Get 100 characters before and after selection
-      const before = Math.max(0, idx - 100);
-      const after = Math.min(fullText.length, idx + sel.length + 100);
-      const ctx = fullText.slice(before, after).replace(/\s+/g, " ");
-
-      return { sel, ctx };
-    } catch (e) {
+      // Take 200 characters before and after the selected term
+      const start = Math.max(0, idx - 200);
+      const end = Math.min(fullText.length, idx + term.length + 200);
+      const ctx = fullText.slice(start, end).replace(/\s+/g, " ");
+      return { sel: term, ctx };
+    } catch {
       return { sel: "", ctx: "" };
     }
   }
 });
+// ----------------------
 
     const hit = probes.find(r => r && r.result && r.result.sel);
     if (!hit) {
@@ -57,9 +56,18 @@ const probes = await chrome.scripting.executeScript({
     chrome.storage.local.get(["OPENAI_KEY"], async (res) => {
       const OPENAI_KEY = res?.OPENAI_KEY;
       if (!OPENAI_KEY) {
-        // console.log("No API key set. Open extension options and add your OpenAI key.");
+        console.log("No API key set. Opening extension options page...");
+        if (chrome.runtime.openOptionsPage) {
+          chrome.runtime.openOptionsPage();
+        } else {
+          const url = chrome.runtime.getURL("options.html");
+          chrome.tabs.create({ url });
+        }
         return;
       }
+
+      // continue with API call using OPENAI_KEY...
+// ----------------------
 
       // console.log("Calling OpenAI for selection:", sel);
       let explanation = "No explanation returned.";
