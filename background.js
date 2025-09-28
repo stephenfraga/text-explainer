@@ -56,6 +56,7 @@ async function runExplainer(tab) {
           const start = Math.max(0, idx - 200);
           const end = Math.min(fullText.length, idx + term.length + 200);
           const ctx = fullText.slice(start, end).replace(/\s+/g, " ");
+
           return { sel: term, ctx };
         } catch {
           return { sel: "", ctx: "" };
@@ -93,7 +94,9 @@ async function runExplainer(tab) {
             "X-Title": "Text Explainer Chrome Extension"
           },
           body: JSON.stringify({
-            model: "deepseek/deepseek-chat-v3.1:free", // try swapping out others: "meta-llama/llama-3.3-70b-instruct:free", "deepseek/deepseek-chat-v3.1:free" or "google/gemini-2.0-flash-exp:free"
+            model: "deepseek/deepseek-chat-v3.1:free", 
+            // try swapping out other free ones: "meta-llama/llama-3.3-70b-instruct:free", "deepseek/deepseek-chat-v3.1:free" or "google/gemini-2.0-flash-exp:free"
+            // or get better performance by setting up a paid account at OpenRouter and then using 
             messages: [
               { role: "system", content: "You are a concise explainer. Output only the replacement phrase." },
               { role: "user", content: `Replace the text "${sel}" with its plain English equivalent only. 
@@ -101,7 +104,7 @@ async function runExplainer(tab) {
                 If it is a foreign word or phrase, output only its English translation.
                 If it is an uncommon word, output only a concise synonym or plain-English paraphrase.
                 If it is a person or proper name, output only a one-sentence identity in noun form.
-                Do not explain or define — output only the replacement phrase.
+                Do not explain or define -- output only the replacement phrase.
                 Context: ${ctx}` }
             ]
           })
