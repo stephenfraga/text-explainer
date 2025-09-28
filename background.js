@@ -1,4 +1,4 @@
-// background.js -- all-in-one with text-search insertion
+// background.js -- replaces the highlighted word with the explanation
 console.log("Background loaded");
 
 chrome.commands.onCommand.addListener(async (command) => {
@@ -21,6 +21,7 @@ chrome.commands.onCommand.addListener(async (command) => {
           const ctx = (document.body?.innerText || document.documentElement?.innerText || "")
             .replace(/\s+/g, " ")
             .slice(0, 600);
+	  console.log("Context is: " + ctx);
           return { sel, ctx };
         } catch (e) {
           return { sel: "", ctx: "" };
@@ -41,9 +42,10 @@ chrome.commands.onCommand.addListener(async (command) => {
     chrome.storage.local.get(["OPENAI_KEY"], async (res) => {
       const OPENAI_KEY = res?.OPENAI_KEY;
       if (!OPENAI_KEY) {
-	console.log("no API key set");
         notify("No API key set. Open extension options and add your OpenAI key.");
         return;
+      } else {
+	notify("Open AI API key loaded");
       }
 
       console.log("Calling OpenAI for selection:", sel);
@@ -84,35 +86,30 @@ chrome.commands.onCommand.addListener(async (command) => {
 
       console.log("Explanation obtained:", explanation);
 
-      // Inject the explanation by searching for the text string
+      // Inject into page, replacing the highlighted text
       try {
         await chrome.scripting.executeScript({
           target: { tabId: tab.id, frameIds: [hit.frameId] },
-          args: [sel, explanation],
-          func: (sel, exp) => {
-            console.log("Injecting explanation for:", sel, "->", exp);
-            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-            while (walker.nextNode()) {
-              const node = walker.currentNode;
-              const idx = node.nodeValue.indexOf(sel);
-              if (idx !== -1) {
-                const range = document.createRange();
-                range.setStart(node, idx + sel.length);
-                range.collapse(true);
-
-                const span = document.createElement("span");
-                span.style.background = "yellow";
-                span.style.marginLeft = "4px";
-                span.style.fontStyle = "italic";
-                span.textContent = ` (${exp})`;
-
-                range.insertNode(span);
-                break;
-              }
+          args: [explanation],
+          func: (exp) => {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) {
+              alert(exp);
+              return;
             }
+            const r = sel.getRangeAt(0);
+            r.deleteContents();
+
+            const frag = document.createDocumentFragment();
+            const span = document.createElement("span");
+            span.innerHTML = `<span style="color:red;">${exp}</span>`;
+            frag.appendChild(span);
+
+            r.insertNode(frag);
+            sel.removeAllRanges();
           }
         });
-        console.log("Injected explanation into page.");
+        console.log("Replaced selection with explanation.");
       } catch (injectErr) {
         console.error("Injection failed:", injectErr);
         notify("Failed to insert explanation into the page: " + injectErr.message);
@@ -126,14 +123,5 @@ chrome.commands.onCommand.addListener(async (command) => {
 });
 
 function notify(message) {
-  try {
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icon.png",
-      title: "Text Explainer",
-      message
-    });
-  } catch (e) {
-    console.warn("Notification failed:", e);
-  }
+  console.log("[Text Explainer]", message);
 }
