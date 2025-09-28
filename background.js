@@ -66,10 +66,8 @@ const probes = await chrome.scripting.executeScript({
         return;
       }
 
-      // continue with API call using OPENAI_KEY...
 // ----------------------
 
-      // console.log("Calling OpenAI for selection:", sel);
       let explanation = "No explanation returned.";
 
       try {
@@ -98,8 +96,8 @@ const probes = await chrome.scripting.executeScript({
           })
         });
 
+//-----------------------
         const data = await response.json();
-        // console.log("OpenAI raw response:", data);
 
         if (data?.error) {
           explanation = "Error: " + (data.error.message || JSON.stringify(data.error));
@@ -113,8 +111,12 @@ const probes = await chrome.scripting.executeScript({
         explanation = "Error: " + fetchErr.message;
       }
 
-      // console.log("Explanation obtained:", explanation);
+      // normalize output for strict replacement
+      if (!explanation.startsWith("Error:")) {
+        explanation = cleanOutput(explanation);
+      }
 
+//--------------------------
       // Inject into page, replacing the highlighted text
       try {
         await chrome.scripting.executeScript({
@@ -151,4 +153,22 @@ const probes = await chrome.scripting.executeScript({
   } catch (err) {
     console.error("Top-level error handling command:", err);
   }
+
+	function cleanOutput(raw) {
+	  if (!raw) return "";
+
+	  let out = raw.trim();
+
+	  // Drop trailing periods or commas
+	  out = out.replace(/[.,;:]+$/, "");
+
+	  // Strip leading "is", "means", "refers to"
+	  out = out.replace(/^(is|means|refers to)\s+/i, "");
+
+	  // If model returns quoted text, strip the quotes
+	  out = out.replace(/^["'](.*)["']$/, "$1");
+
+	  return out.trim();
+	}
+
 });
