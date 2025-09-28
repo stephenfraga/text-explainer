@@ -84,8 +84,16 @@ const probes = await chrome.scripting.executeScript({
             temperature: 0,
             max_tokens: 160,
             messages: [
-              { role: "system", content: "You are a concise explainer. Answer in 1-2 plain sentences." },
-              { role: "user", content: `Explain the text "${sel}" in plain English. If it is an acronym or abbreviation, spell it out. If it is a foreign word, convert to English, if it is an esoteric word or name, return a short definition or bio. The context surrounding the word is: ${ctx}` }
+		{ 
+		  role: "user", 
+		  content: `Replace the text "${sel}" with its plain English equivalent only. 
+		If it is an acronym, output only its expanded form (e.g., "IRS" = "Internal Revenue Service"). 
+		If it is a foreign word or phrase, output only its English translation (e.g., "grand chien" = "big dog"). 
+		If it is an uncommon word, output only a concise synonym or plain-English paraphrase (e.g., "ephemeral" = "lasting only briefly"). 
+		If it is a person or proper name, output only a one-sentence identity in noun form (e.g., "Aubrey Beardsley" = "English author and illustrator"). 
+		Do not explain, define, or add commentary -- output only the replacement phrase. 
+		Context: ${ctx}`
+		}
             ]
           })
         });
