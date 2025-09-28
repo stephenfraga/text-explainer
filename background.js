@@ -7,32 +7,42 @@ chrome.commands.onCommand.addListener(async (command) => {
       return;
     }
 
-    // Probe page for selection and nearby context
-    const probes = await chrome.scripting.executeScript({
-      target: { tabId: tab.id, allFrames: true },
-      func: () => {
-        try {
-          const selObj = window.getSelection();
-          if (!selObj || selObj.rangeCount === 0) {
-            return { sel: "", ctx: "" };
-          }
-
-          const range = selObj.getRangeAt(0);
-          const containerText = range.startContainer.textContent || "";
-
-          // Calculate 200 chars before and after selection
-          const start = Math.max(0, range.startOffset - 200);
-          const end = Math.min(containerText.length, range.endOffset + 200);
-
-          const ctx = containerText.slice(start, end).replace(/\s+/g, " ");
-          const sel = selObj.toString().trim();
-
-          return { sel, ctx };
-        } catch (e) {
-          return { sel: "", ctx: "" };
-        }
+// Probe page for selection and nearby context
+const probes = await chrome.scripting.executeScript({
+  target: { tabId: tab.id, allFrames: true },
+  func: () => {
+    try {
+      const selObj = window.getSelection();
+      if (!selObj || selObj.rangeCount === 0) {
+        return { sel: "", ctx: "" };
       }
-    });
+
+      const range = selObj.getRangeAt(0);
+      const sel = selObj.toString().trim();
+
+      // Climb to a larger container (like a <p> or <div>)
+      let container = range.commonAncestorContainer;
+      if (container.nodeType !== Node.ELEMENT_NODE) {
+        container = container.parentElement;
+      }
+
+      const fullText = container.innerText || container.textContent || "";
+      const idx = fullText.indexOf(sel);
+      if (idx === -1) {
+        return { sel, ctx: "" };
+      }
+
+      // Get 100 characters before and after selection
+      const before = Math.max(0, idx - 100);
+      const after = Math.min(fullText.length, idx + sel.length + 100);
+      const ctx = fullText.slice(before, after).replace(/\s+/g, " ");
+
+      return { sel, ctx };
+    } catch (e) {
+      return { sel: "", ctx: "" };
+    }
+  }
+});
 
     console.log("Probe results:", probes);
     const hit = probes.find(r => r && r.result && r.result.sel);
