@@ -1,21 +1,23 @@
 {
   "manifest_version": 3,
   "name": "Text Explainer",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Explain selected text via OpenAI",
   "permissions": [
     "scripting",
     "storage",
     "activeTab",
-    "notifications"
+    "notifications",
+    "contextMenus"
   ],
-  "host_permissions": [
-    "https://*/*"
-  ],
-  "background": { "service_worker": "background.js" },
+  "background": {
+    "service_worker": "background.js"
+  },
   "commands": {
     "trigger_explainer": {
-      "suggested_key": { "default": "Ctrl+Shift+H" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+H"
+      },
       "description": "Explain selected text"
     }
   },

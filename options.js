@@ -1,3 +1,5 @@
+// options.js
+
 const input = document.getElementById("keyInput");
 const saveBtn = document.getElementById("save");
 const clearBtn = document.getElementById("clear");
@@ -13,7 +15,7 @@ saveBtn.addEventListener("click", () => {
   const key = input.value.trim();
   if (key) {
     chrome.storage.local.set({ OPENAI_KEY: key }, () => {
-      showStatus("API key saved.", "success");
+      showStatus("API key saved. Close this tab to return.", "success");
     });
   } else {
     showStatus("Please enter a valid API key.", "error");
@@ -24,7 +26,7 @@ saveBtn.addEventListener("click", () => {
 clearBtn.addEventListener("click", () => {
   chrome.storage.local.remove("OPENAI_KEY", () => {
     input.value = "";
-    showStatus("API key cleared.", "success");
+    showStatus("API key cleared. Close this tab to return.", "success");
   });
 });
 
