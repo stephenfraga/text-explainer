@@ -85,7 +85,7 @@ const probes = await chrome.scripting.executeScript({
             max_tokens: 160,
             messages: [
               { role: "system", content: "You are a concise explainer. Answer in 1-2 plain sentences." },
-              { role: "user", content: `Explain "${sel}" in plain English. Context: ${ctx}` }
+              { role: "user", content: `Explain the text "${sel}" in plain English. If it is an acronym or abbreviation, spell it out. If it is a foreign word, convert to English, if it is an esoteric word or name, return a short definition or bio. The context surrounding the word is: ${ctx}` }
             ]
           })
         });
