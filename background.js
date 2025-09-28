@@ -44,7 +44,6 @@ const probes = await chrome.scripting.executeScript({
   }
 });
 
-    console.log("Probe results:", probes);
     const hit = probes.find(r => r && r.result && r.result.sel);
     if (!hit) {
       // console.log("No text selected (or cannot access the frame).");
@@ -52,8 +51,8 @@ const probes = await chrome.scripting.executeScript({
     }
 
     const { sel, ctx } = hit.result;
-    // console.log("Found selection in frameId=%s: %s", hit.frameId, sel);
-    console.log("Context extracted:", ctx);
+    console.log("Word: ", sel);
+    console.log("Context:", ctx);
 
     chrome.storage.local.get(["OPENAI_KEY"], async (res) => {
       const OPENAI_KEY = res?.OPENAI_KEY;
