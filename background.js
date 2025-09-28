@@ -1,6 +1,3 @@
-// background.js -- replaces the highlighted word with the explanation
-console.log("Background loaded");
-
 chrome.commands.onCommand.addListener(async (command) => {
   console.log("Command received:", command);
   if (command !== "trigger_explainer") return;
@@ -32,7 +29,7 @@ chrome.commands.onCommand.addListener(async (command) => {
     console.log("Probe results:", probes);
     const hit = probes.find(r => r && r.result && r.result.sel);
     if (!hit) {
-      notify("No text selected (or cannot access the frame).");
+      // No text selected (or cannot access the frame)
       return;
     }
 
@@ -42,10 +39,10 @@ chrome.commands.onCommand.addListener(async (command) => {
     chrome.storage.local.get(["OPENAI_KEY"], async (res) => {
       const OPENAI_KEY = res?.OPENAI_KEY;
       if (!OPENAI_KEY) {
-        notify("No API key set. Open extension options and add your OpenAI key.");
+        // No API key set. Open extension options and add your OpenAI key.
         return;
       } else {
-	notify("Open AI API key loaded");
+	// Open AI API key loaded
       }
 
       console.log("Calling OpenAI for selection:", sel);
@@ -101,9 +98,13 @@ chrome.commands.onCommand.addListener(async (command) => {
             r.deleteContents();
 
             const frag = document.createDocumentFragment();
-            const span = document.createElement("span");
-            span.innerHTML = `<span style="color:red;">${exp}</span>`;
-            frag.appendChild(span);
+            // safe insertion: create elements and use textContent (no innerHTML)
+            const wrapper = document.createElement('span');
+            const out = document.createElement('span');
+            out.style.color = 'red';
+            out.textContent = exp;      // escape any HTML from the model
+            wrapper.appendChild(out);
+            frag.appendChild(wrapper);
 
             r.insertNode(frag);
             sel.removeAllRanges();
@@ -112,16 +113,12 @@ chrome.commands.onCommand.addListener(async (command) => {
         console.log("Replaced selection with explanation.");
       } catch (injectErr) {
         console.error("Injection failed:", injectErr);
-        notify("Failed to insert explanation into the page: " + injectErr.message);
+        // Failed to insert explanation into the page
       }
     });
 
   } catch (err) {
     console.error("Top-level error handling command:", err);
-    notify("Unexpected error: " + (err && err.message ? err.message : String(err)));
+    // Unexpected error
   }
 });
-
-function notify(message) {
-  console.log("[Text Explainer]", message);
-}
